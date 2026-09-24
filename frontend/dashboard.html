@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque Fácil - Painel Principal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col md:flex-row">
+
+    <!-- Overlay de Fundo para o Menu Mobile -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- Sidebar Menu (Mobile Drawer + Desktop Fixed) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static md:flex transition-transform duration-300 ease-in-out min-h-screen">
+        <div>
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white leading-tight">Estoque Fácil</h1>
+                        <span class="text-xs text-slate-400">Controle Inteligente</span>
+                    </div>
+                </div>
+                <!-- Botão Fechar Menu (Mobile) -->
+                <button id="closeSidebarBtn" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="/static/dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+                <a href="/static/produtos.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-box"></i> Produtos
+                </a>
+                <a href="/static/movimentacoes.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-right-left"></i> Entradas / Saídas
+                </a>
+                <a href="/static/relatorios.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-chart-pie"></i> Relatórios & SQL
+                </a>
+                <a href="/static/usuarios.html" id="navUsers" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition hidden">
+                    <i class="fa-solid fa-users-gear"></i> Usuários
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3 mb-3 px-2">
+                <div class="w-9 h-9 bg-slate-700 rounded-full flex items-center justify-center text-white font-bold">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div id="sidebarUserName" class="text-sm font-semibold text-white truncate">Usuário</div>
+                    <div id="sidebarUserRole" class="text-xs text-blue-400 font-medium uppercase">Role</div>
+                </div>
+            </div>
+            <button id="logoutBtn" class="w-full py-2 px-3 bg-slate-800 hover:bg-red-600/20 hover:text-red-400 text-slate-400 rounded-lg text-sm font-medium transition text-left flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0">
+        <!-- Top Navbar Mobile/Desktop -->
+        <header class="bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+                <!-- Hambúrguer Mobile -->
+                <button id="openSidebarBtn" class="md:hidden text-slate-700 hover:text-blue-600 p-2 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 class="text-xl font-bold text-slate-800">Painel Principal</h2>
+            </div>
+            <div class="text-sm text-slate-500">
+                <i class="fa-regular fa-clock mr-1"></i> <span id="currentDate"></span>
+            </div>
+        </header>
+
+        <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
+
+            <!-- Banner Boas-Vindas -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold mb-1">Olá, <span id="welcomeName">Usuário</span>! 👋</h3>
+                    <p class="text-blue-100 text-sm">Aqui está o resumo atualizado do estoque da sua empresa.</p>
+                </div>
+                <div>
+                    <a href="/static/movimentacoes.html" class="bg-white text-blue-700 font-semibold px-4 py-2.5 rounded-lg shadow hover:bg-blue-50 transition inline-flex items-center gap-2 text-sm w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> Nova Movimentação
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                <!-- Total Cadastrados -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Total de Produtos</span>
+                        <div id="cardTotalProducts" class="text-2xl font-bold text-slate-800 mt-1">--</div>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </div>
+                </div>
+
+                <!-- Itens em Estoque -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Unidades em Estoque</span>
+                        <div id="cardTotalItems" class="text-2xl font-bold text-slate-800 mt-1">--</div>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                </div>
+
+                <!-- Estoque Baixo (Alerta) -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-600 uppercase">Alertas de Reposição</span>
+                        <div id="cardLowStock" class="text-2xl font-bold text-amber-600 mt-1">--</div>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+
+                <!-- Financial Card (Admin Only) -->
+                <div id="cardValuationWrapper" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Valor Total (Custo)</span>
+                        <div id="cardCostValuation" class="text-2xl font-bold text-slate-800 mt-1">R$ --</div>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela Alerta de Estoque Baixo -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 md:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base md:text-lg">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Produtos Necessitando de Reposição
+                    </h3>
+                    <span class="text-xs text-slate-500">Abaixo do estoque mínimo</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200 whitespace-nowrap">
+                                <th class="p-4">SKU / Código</th>
+                                <th class="p-4">Produto</th>
+                                <th class="p-4">Categoria</th>
+                                <th class="p-4 text-center">Estoque Atual</th>
+                                <th class="p-4 text-center">Mínimo</th>
+                                <th class="p-4 text-right">Ação Sugerida</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTable" class="divide-y divide-slate-100 text-sm whitespace-nowrap">
+                            <tr>
+                                <td colspan="6" class="p-4 text-center text-slate-400">Carregando alertas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        const name = localStorage.getItem('name');
+
+        if (!token) {
+            window.location.href = '/static/index.html';
+        }
+
+        // Lógica do Menu Mobile Responsive Drawer
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const openSidebarBtn = document.getElementById('openSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        openSidebarBtn?.addEventListener('click', openSidebar);
+        closeSidebarBtn?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+
+        document.getElementById('sidebarUserName').innerText = name || 'Usuário';
+        document.getElementById('welcomeName').innerText = name || 'Usuário';
+        document.getElementById('sidebarUserRole').innerText = role === 'ADMIN' ? 'Administrador' : 'Funcionário';
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR');
+
+        if (role === 'ADMIN') {
+            document.getElementById('navUsers').classList.remove('hidden');
+        } else {
+            document.getElementById('cardValuationWrapper').classList.add('hidden');
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/static/index.html';
+        });
+
+        async function loadDashboardData() {
+            const headers = { 'Authorization': `Bearer ${token}` };
+
+            try {
+                const res = await fetch('/api/products', { headers });
+                if (res.ok) {
+                    const products = await res.json();
+                    document.getElementById('cardTotalProducts').innerText = products.length;
+                    const totalUnits = products.reduce((acc, p) => acc + p.quantity, 0);
+                    document.getElementById('cardTotalItems').innerText = totalUnits;
+                    
+                    const lowStockItems = products.filter(p => p.is_low_stock);
+                    document.getElementById('cardLowStock').innerText = lowStockItems.length;
+
+                    renderLowStockTable(lowStockItems);
+                }
+            } catch (err) { console.error(err); }
+
+            if (role === 'ADMIN') {
+                try {
+                    const res = await fetch('/api/reports/valuation', { headers });
+                    if (res.ok) {
+                        const val = await res.json();
+                        document.getElementById('cardCostValuation').innerText = `R$ ${val.total_cost_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    }
+                } catch (err) { console.error(err); }
+            }
+        }
+
+        function renderLowStockTable(items) {
+            const tbody = document.getElementById('lowStockTable');
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-emerald-600 font-medium">
+                            <i class="fa-solid fa-circle-check text-xl mb-1 block"></i> Excelente! Nenhum produto está com estoque baixo.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = items.map(p => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 font-mono font-semibold text-slate-700">${p.code}</td>
+                    <td class="p-4 font-medium text-slate-800">${p.name}</td>
+                    <td class="p-4 text-slate-500"><span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-full font-medium">${p.category}</span></td>
+                    <td class="p-4 text-center font-bold text-red-600">${p.quantity} ${p.unit}</td>
+                    <td class="p-4 text-center font-semibold text-slate-600">${p.min_quantity} ${p.unit}</td>
+                    <td class="p-4 text-right">
+                        <a href="/static/movimentacoes.html" class="inline-flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm transition">
+                            <i class="fa-solid fa-arrow-down-short-wide"></i> Repor
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        loadDashboardData();
+    </script>
+</body>
+</html>

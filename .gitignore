@@ -1,0 +1,25 @@
+# Variáveis de ambiente sensíveis
+.env
+
+# Ambiente Virtual Python
+.evenv/
+venv/
+env/
+ENV/
+backend/venv/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Bancos de dados locais SQLite
+*.db
+*.sqlite3
+backend/estoque_facil.db
+backend/estoque.db
+
+# VS Code e IDEs
+.vscode/
+.idea/
+.ds_store

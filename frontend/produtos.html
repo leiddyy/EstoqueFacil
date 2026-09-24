@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque Fácil - Produtos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bibliotecas de Exportação Excel e PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col md:flex-row">
+
+    <!-- Overlay Mobile -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- Sidebar Menu Mobile/Desktop -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static md:flex transition-transform duration-300 ease-in-out min-h-screen">
+        <div>
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white leading-tight">Estoque Fácil</h1>
+                        <span class="text-xs text-slate-400">Controle Inteligente</span>
+                    </div>
+                </div>
+                <button id="closeSidebarBtn" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="/static/dashboard.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+                <a href="/static/produtos.html" class="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium">
+                    <i class="fa-solid fa-box"></i> Produtos
+                </a>
+                <a href="/static/movimentacoes.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-right-left"></i> Entradas / Saídas
+                </a>
+                <a href="/static/relatorios.html" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-chart-pie"></i> Relatórios & SQL
+                </a>
+                <a href="/static/usuarios.html" id="navUsers" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition hidden">
+                    <i class="fa-solid fa-users-gear"></i> Usuários
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <button id="logoutBtn" class="w-full py-2 px-3 bg-slate-800 hover:bg-red-600/20 hover:text-red-400 text-slate-400 rounded-lg text-sm font-medium transition text-left flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <header class="bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center gap-2 md:gap-3">
+                <button onclick="window.history.back()" class="text-slate-600 hover:text-blue-600 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition" title="Voltar para a página anterior">
+                    <i class="fa-solid fa-arrow-left text-base"></i>
+                </button>
+                <button id="openSidebarBtn" class="md:hidden text-slate-700 hover:text-blue-600 p-2 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 class="text-lg md:text-xl font-bold text-slate-800">Produtos</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btnExportExcel" title="Exportar catálogo em Excel" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg text-xs md:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Excel</span>
+                </button>
+                <button id="btnExportPDF" title="Exportar catálogo em PDF" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-2 rounded-lg text-xs md:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-pdf"></i> <span class="hidden md:inline">PDF</span>
+                </button>
+                <button id="btnOpenModal" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded-lg text-xs md:text-sm shadow-md transition flex items-center gap-2 hidden">
+                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Novo Produto</span><span class="sm:hidden">Novo</span>
+                </button>
+            </div>
+        </header>
+
+
+
+        <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
+            <!-- Barra de Busca & Filtros de Categoria -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <!-- Campo Texto (Busca por nome/código) -->
+                <div class="relative flex-1 w-full">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Buscar por código ou nome do produto..."
+                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <!-- Seletor Filtro por Categoria -->
+                <div class="w-full sm:w-64">
+                    <select id="categoryFilter" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 font-medium text-slate-700">
+                        <option value="">📂 Todas as Categorias</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <!-- Tabela de Produtos -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200 whitespace-nowrap">
+                                <th class="p-4">SKU / Barra</th>
+                                <th class="p-4">Nome do Produto</th>
+                                <th class="p-4">Categoria</th>
+                                <th class="p-4 text-right th-cost hidden">Preço Custo</th>
+                                <th class="p-4 text-right">Preço Venda</th>
+                                <th class="p-4 text-center">Estoque</th>
+                                <th class="p-4 text-center">Estoque Mín.</th>
+                                <th class="p-4 text-center th-actions hidden">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTable" class="divide-y divide-slate-100 text-sm whitespace-nowrap">
+                            <tr><td colspan="8" class="p-4 text-center text-slate-400">Carregando catálogo...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Modal Cadastrar / Editar Produto (Apenas Admin) -->
+    <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col my-auto">
+            <div class="p-4 md:p-5 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 id="modalTitle" class="font-bold text-lg">Novo Produto</h3>
+                <button id="btnCloseModal" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="productForm" class="p-4 md:p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="productId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Código / Barras (Bipe aqui) *</label>
+                        <div class="relative">
+                            <input type="text" id="pCode" required placeholder="Ex: 7891000360010" autocomplete="off"
+                                class="w-full p-2.5 pr-10 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                            <button type="button" id="btnLookupBarcode" title="Buscar informações por código de barras" class="absolute right-2 top-2 text-slate-400 hover:text-blue-600 p-1">
+                                <i class="fa-solid fa-barcode text-base"></i>
+                            </button>
+                        </div>
+                        <span id="barcodeStatus" class="text-[11px] text-slate-500 mt-1 block">💡 Dica: Bipe o produto com o leitor USB ou digite o código e pressione ENTER.</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Unidade *</label>
+                        <select id="pUnit" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="un">Unidade (un)</option>
+                            <option value="kg">Quilo (kg)</option>
+                            <option value="cx">Caixa (cx)</option>
+                            <option value="litro">Litro (l)</option>
+                            <option value="pacote">Pacote (pct)</option>
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Produto *</label>
+                        <input type="text" id="pName" required class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Unidades por Caixa (Fator CX) *</label>
+                        <input type="number" id="pItemsPerBox" min="1" value="1" required placeholder="Ex: 12 ou 24" title="Qtd de unidades avulsas dentro de 1 caixa fechada" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Categoria do Produto *</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 z-10">
+                            <i class="fa-solid fa-layer-group text-sm"></i>
+                        </div>
+                        
+                        <!-- Custom Category Dropdown Trigger -->
+                        <button type="button" id="customCategoryBtn" class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none flex items-center justify-between font-medium transition cursor-pointer text-left hover:bg-slate-100">
+                            <span id="customCategorySelectedLabel" class="truncate text-slate-500">Escolha uma categoria...</span>
+                            <i id="customCategoryChevron" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+                        </button>
+
+                        <!-- Custom Category Floating Panel -->
+                        <div id="customCategoryDropdownMenu" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto p-1.5 z-50 space-y-0.5 divide-y divide-slate-100">
+                            <div id="categoryItemsContainer" class="space-y-0.5">
+                                <!-- Preenchido dinamicamente via JS -->
+                            </div>
+                            <div class="pt-1">
+                                <button type="button" data-value="__NEW__" class="category-item-btn w-full px-3 py-2 text-left text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-2 transition">
+                                    <span>➕</span> <span>Outra Categoria (Cadastrar Nova)...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input para digitar nova categoria personalizada -->
+                    <div id="newCategoryWrapper" class="hidden mt-2">
+                        <div class="relative">
+                            <input type="text" id="pCategoryCustom" placeholder="Digite o nome da nova categoria..."
+                                class="w-full p-2.5 bg-white border border-blue-400 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium">
+                            <button type="button" id="btnCancelCustomCategory" class="absolute right-2 top-2 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-2 py-1 rounded-lg">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="pCategory" required>
+                </div>
+
+
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Preço Custo (R$) *</label>
+                        <input type="number" step="0.01" id="pCostPrice" required class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Venda Avulsa (R$) *</label>
+                        <input type="number" step="0.01" id="pSellingPrice" required placeholder="Preço da unidade" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Venda Caixa (R$)</label>
+                        <input type="number" step="0.01" id="pBoxSellingPrice" placeholder="Opcional (Atacado)" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Qtd Inicial *</label>
+                        <input type="number" id="pQuantity" required min="0" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Estoque Mínimo *</label>
+                        <input type="number" id="pMinQuantity" required min="0" class="w-full p-2.5 border rounded-lg text-sm border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t shrink-0">
+                    <button type="button" id="btnCancel" class="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 text-sm">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm shadow">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        let allProducts = [];
+
+        if (!token) window.location.href = '/static/index.html';
+
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const openSidebarBtn = document.getElementById('openSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        openSidebarBtn?.addEventListener('click', openSidebar);
+        closeSidebarBtn?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+
+        if (role === 'ADMIN') {
+            document.getElementById('navUsers').classList.remove('hidden');
+            document.getElementById('btnOpenModal').classList.remove('hidden');
+            document.querySelectorAll('.th-cost').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.th-actions').forEach(el => el.classList.remove('hidden'));
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/static/index.html';
+        });
+
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/api/products', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    allProducts = await res.json();
+                    populateCategoryDropdown(allProducts);
+                    applyFilters();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderTable(products) {
+            const tbody = document.getElementById('productsTable');
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhum produto encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => `
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="p-4 font-mono font-semibold text-slate-700">${p.code}</td>
+                    <td class="p-4 font-medium text-slate-800">
+                        ${p.name}
+                        ${p.is_low_stock ? `<span class="ml-2 bg-amber-100 text-amber-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> Baixo</span>` : ''}
+                    </td>
+                    <td class="p-4 text-slate-500"><span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-full">${p.category}</span></td>
+                    ${role === 'ADMIN' ? `<td class="p-4 text-right font-mono text-slate-500">R$ ${p.cost_price ? p.cost_price.toFixed(2) : '0.00'}</td>` : ''}
+                    <td class="p-4 text-right font-mono">
+                        <div class="font-semibold text-emerald-600">R$ ${p.selling_price.toFixed(2)} <span class="text-[10px] text-slate-400 font-normal">/un</span></div>
+                        ${p.box_selling_price && p.box_selling_price > 0 ? `<div class="text-xs text-blue-600 font-medium">R$ ${p.box_selling_price.toFixed(2)} <span class="text-[10px] text-slate-400 font-normal">/cx (${p.items_per_box}un)</span></div>` : ''}
+                    </td>
+
+                    <td class="p-4 text-center font-bold ${p.is_low_stock ? 'text-red-600' : 'text-slate-800'}">${p.quantity} ${p.unit}</td>
+                    <td class="p-4 text-center text-slate-500">${p.min_quantity} ${p.unit}</td>
+                    ${role === 'ADMIN' ? `
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="editProduct(${p.id})" class="text-blue-600 hover:text-blue-800 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-600 hover:text-red-800 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>` : ''}
+                </tr>
+            `).join('');
+        }
+
+
+        const categoryIcons = {
+            "Bebidas": "🥤",
+            "Mercearia": "🛒",
+            "Laticínios & Frios": "🧀",
+            "Hortifruti": "🥬",
+            "Padaria & Confeitaria": "🍞",
+            "Açougue & Carnes": "🥩",
+            "Limpeza": "🧹",
+            "Higiene & Perfumaria": "🧴",
+            "Congelados": "🧊",
+            "Doces & Biscoitos": "🍪",
+            "Snacks & Petiscos": "🍿",
+            "Utilidades Domésticas": "🍽️",
+            "Pet Shop": "🐶",
+            "Geral": "📦"
+        };
+
+        function populateCategoryDropdown(products) {
+            const select = document.getElementById('categoryFilter');
+
+            const defaultCategories = [
+                "Bebidas", "Mercearia", "Laticínios & Frios", "Hortifruti",
+                "Padaria & Confeitaria", "Açougue & Carnes", "Limpeza",
+                "Higiene & Perfumaria", "Congelados", "Doces & Biscoitos",
+                "Snacks & Petiscos", "Utilidades Domésticas", "Pet Shop", "Geral"
+            ];
+            
+            const existingInDb = products.map(p => p.category).filter(Boolean);
+            const allUnique = [...new Set([...defaultCategories, ...existingInDb])].sort();
+            
+            const currentSelected = select.value;
+            select.innerHTML = '<option value="">📂 Todas as Categorias</option>' +
+                allUnique.map(c => `<option value="${c}">${categoryIcons[c] || '🏷️'} ${c}</option>`).join('');
+            select.value = currentSelected;
+
+            renderCustomCategoryItems(allUnique);
+        }
+
+        function renderCustomCategoryItems(uniqueCategories) {
+            const container = document.getElementById('categoryItemsContainer');
+            if (!container) return;
+
+            container.innerHTML = uniqueCategories.map(cat => {
+                const icon = categoryIcons[cat] || "🏷️";
+                return `
+                    <button type="button" data-value="${cat}" class="category-item-btn w-full px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg flex items-center gap-2.5 transition cursor-pointer">
+                        <span class="text-base">${icon}</span>
+                        <span>${cat}</span>
+                    </button>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.category-item-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = btn.getAttribute('data-value');
+                    selectCategoryOption(val);
+                });
+            });
+        }
+
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedCategory = document.getElementById('categoryFilter').value.toLowerCase();
+
+            const filtered = allProducts.filter(p => {
+                const matchesSearch = !searchTerm || 
+                    p.code.toLowerCase().includes(searchTerm) ||
+                    p.name.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = !selectedCategory || 
+                    (p.category && p.category.toLowerCase() === selectedCategory);
+
+                return matchesSearch && matchesCategory;
+            });
+
+            renderTable(filtered);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+
+
+        const modal = document.getElementById('productModal');
+        const pCodeInput = document.getElementById('pCode');
+        const barcodeStatus = document.getElementById('barcodeStatus');
+
+        const customCategoryBtn = document.getElementById('customCategoryBtn');
+        const customCategoryDropdownMenu = document.getElementById('customCategoryDropdownMenu');
+        const customCategoryChevron = document.getElementById('customCategoryChevron');
+        const customCategorySelectedLabel = document.getElementById('customCategorySelectedLabel');
+
+        const categoryCustomInput = document.getElementById('pCategoryCustom');
+        const newCategoryWrapper = document.getElementById('newCategoryWrapper');
+        const hiddenCategoryInput = document.getElementById('pCategory');
+
+        function toggleCategoryDropdown(show) {
+            const isHidden = customCategoryDropdownMenu.classList.contains('hidden');
+            const shouldShow = show !== undefined ? show : isHidden;
+
+            if (shouldShow) {
+                customCategoryDropdownMenu.classList.remove('hidden');
+                customCategoryChevron.classList.add('rotate-180');
+            } else {
+                customCategoryDropdownMenu.classList.add('hidden');
+                customCategoryChevron.classList.remove('rotate-180');
+            }
+        }
+
+        customCategoryBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleCategoryDropdown();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!customCategoryDropdownMenu?.contains(e.target) && !customCategoryBtn?.contains(e.target)) {
+                toggleCategoryDropdown(false);
+            }
+        });
+
+        document.querySelectorAll('.category-item-btn[data-value="__NEW__"]').forEach(btn => {
+            btn.addEventListener('click', () => selectCategoryOption('__NEW__'));
+        });
+
+        function selectCategoryOption(val) {
+            toggleCategoryDropdown(false);
+            if (val === '__NEW__') {
+                newCategoryWrapper.classList.remove('hidden');
+                customCategorySelectedLabel.innerHTML = `<span class="text-blue-600 font-semibold">➕ Nova Categoria Personalizada</span>`;
+                categoryCustomInput.value = '';
+                categoryCustomInput.focus();
+                hiddenCategoryInput.value = '';
+            } else {
+                newCategoryWrapper.classList.add('hidden');
+                categoryCustomInput.value = '';
+                const icon = categoryIcons[val] || "🏷️";
+                customCategorySelectedLabel.innerHTML = `<span class="text-slate-800 font-semibold flex items-center gap-2"><span>${icon}</span> <span>${val}</span></span>`;
+                hiddenCategoryInput.value = val;
+            }
+        }
+
+        // Função para definir o valor da categoria de forma limpa e bonita
+        function setCategoryValue(categoryName) {
+            if (!categoryName) categoryName = 'Geral';
+            selectCategoryOption(categoryName);
+
+            // Se for uma categoria que não está na lista padrão
+            if (categoryName !== 'Geral' && !categoryIcons[categoryName]) {
+                newCategoryWrapper.classList.remove('hidden');
+                categoryCustomInput.value = categoryName;
+                hiddenCategoryInput.value = categoryName;
+                customCategorySelectedLabel.innerHTML = `<span class="text-slate-800 font-semibold flex items-center gap-2"><span>🏷️</span> <span>${categoryName}</span></span>`;
+            }
+        }
+
+        categoryCustomInput?.addEventListener('input', (e) => {
+            hiddenCategoryInput.value = e.target.value.trim() || 'Geral';
+        });
+
+        document.getElementById('btnCancelCustomCategory')?.addEventListener('click', () => {
+            setCategoryValue('Geral');
+        });
+
+        document.getElementById('btnOpenModal')?.addEventListener('click', () => {
+            document.getElementById('modalTitle').innerText = 'Novo Produto';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('pQuantity').disabled = false;
+            setCategoryValue('Geral');
+            barcodeStatus.innerHTML = `💡 Dica: Bipe o produto com o leitor USB ou digite o código e pressione ENTER.`;
+            barcodeStatus.className = "text-[11px] text-slate-500 mt-1 block";
+            modal.classList.remove('hidden');
+            setTimeout(() => pCodeInput.focus(), 100);
+        });
+
+
+        // Função de bipagem / busca por código de barras
+        async function fetchBarcodeInfo() {
+            const barcode = pCodeInput.value.trim();
+            if (!barcode) return;
+
+            barcodeStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-blue-500"></i> Buscando informações do produto...`;
+            barcodeStatus.className = "text-[11px] text-blue-600 mt-1 block font-semibold";
+
+            try {
+                const res = await fetch(`/api/products/lookup/${barcode}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.found) {
+                        if (data.source === 'local') {
+                            barcodeStatus.innerHTML = `⚠️ Produto já cadastrado no banco local! Dados carregados.`;
+                            barcodeStatus.className = "text-[11px] text-amber-600 mt-1 block font-semibold";
+                        } else if (data.source === 'bluesoft_cosmos') {
+                            barcodeStatus.innerHTML = `🛒 Produto encontrado no Bluesoft Cosmos! Informações preenchidas. Insira apenas a quantidade.`;
+                            barcodeStatus.className = "text-[11px] text-emerald-600 mt-1 block font-semibold";
+                        } else {
+                            barcodeStatus.innerHTML = `✨ Produto encontrado no catálogo EAN! Informações preenchidas. Insira apenas a quantidade.`;
+                            barcodeStatus.className = "text-[11px] text-emerald-600 mt-1 block font-semibold";
+                        }
+
+                        const catVal = data.category || 'Geral';
+                        setCategoryValue(catVal);
+                        document.getElementById('pName').value = data.name || '';
+                        document.getElementById('pUnit').value = data.unit || 'un';
+                        if (data.cost_price) document.getElementById('pCostPrice').value = data.cost_price;
+                        if (data.selling_price) document.getElementById('pSellingPrice').value = data.selling_price;
+                        if (data.min_quantity) document.getElementById('pMinQuantity').value = data.min_quantity;
+
+                        
+                        // Focar diretamente no campo de Quantidade para o Administrador digitar manualmente
+                        setTimeout(() => document.getElementById('pQuantity').focus(), 150);
+                    } else {
+                        barcodeStatus.innerHTML = `ℹ️ Código de barras não encontrado em bases públicas. Preencha os campos normalmente.`;
+                        barcodeStatus.className = "text-[11px] text-slate-500 mt-1 block";
+                        setTimeout(() => document.getElementById('pName').focus(), 100);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                barcodeStatus.innerHTML = `❌ Erro ao buscar código de barras.`;
+                barcodeStatus.className = "text-[11px] text-red-500 mt-1 block";
+            }
+        }
+
+        // Bipadores USB simulam digitação rápida + tecla ENTER
+        pCodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchBarcodeInfo();
+            }
+        });
+
+        document.getElementById('btnLookupBarcode')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            fetchBarcodeInfo();
+        });
+
+
+        document.getElementById('btnCloseModal')?.addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('btnCancel')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+        document.getElementById('productForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const boxPriceVal = document.getElementById('pBoxSellingPrice').value;
+            const payload = {
+                code: document.getElementById('pCode').value,
+                name: document.getElementById('pName').value,
+                unit: document.getElementById('pUnit').value,
+                items_per_box: parseInt(document.getElementById('pItemsPerBox').value) || 1,
+                category: document.getElementById('pCategory').value || 'Geral',
+                cost_price: parseFloat(document.getElementById('pCostPrice').value),
+                selling_price: parseFloat(document.getElementById('pSellingPrice').value),
+                box_selling_price: boxPriceVal ? parseFloat(boxPriceVal) : 0.0,
+                quantity: parseInt(document.getElementById('pQuantity').value),
+                min_quantity: parseInt(document.getElementById('pMinQuantity').value),
+            };
+
+            const url = id ? `/api/products/${id}` : '/api/products';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    modal.classList.add('hidden');
+                    fetchProducts();
+                } else {
+                    const data = await res.json();
+                    alert(data.detail || 'Erro ao salvar produto');
+                }
+            } catch(err) { console.error(err); }
+        });
+
+        window.editProduct = (id) => {
+            const p = allProducts.find(item => item.id === id);
+            if (!p) return;
+            document.getElementById('modalTitle').innerText = 'Editar Produto';
+            document.getElementById('productId').value = p.id;
+            document.getElementById('pCode').value = p.code;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pUnit').value = p.unit;
+            document.getElementById('pItemsPerBox').value = p.items_per_box || 1;
+            setCategoryValue(p.category || 'Geral');
+            document.getElementById('pCostPrice').value = p.cost_price || 0;
+            document.getElementById('pSellingPrice').value = p.selling_price;
+            document.getElementById('pBoxSellingPrice').value = p.box_selling_price || 0;
+            document.getElementById('pQuantity').value = p.quantity;
+            document.getElementById('pQuantity').disabled = true;
+            document.getElementById('pMinQuantity').value = p.min_quantity;
+            modal.classList.remove('hidden');
+        };
+
+
+
+
+        window.deleteProduct = async (id) => {
+            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+            try {
+                const res = await fetch(`/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) fetchProducts();
+                else {
+                    const data = await res.json();
+                    alert(data.detail || 'Erro ao excluir.');
+                }
+            } catch(err) { console.error(err); }
+        };
+
+        // --- LÓGICA DE EXPORTAÇÃO EXCEL & PDF (PRODUTOS) ---
+        document.getElementById('btnExportExcel')?.addEventListener('click', () => {
+            if (!allProducts || allProducts.length === 0) {
+                alert('Nenhum produto disponível para exportar.');
+                return;
+            }
+
+            const dataToExport = allProducts.map(p => {
+                const item = {
+                    'Código / SKU': p.code,
+                    'Nome do Produto': p.name,
+                    'Categoria': p.category,
+                    'Unidade': p.unit,
+                    'Qtd por Caixa': p.items_per_box || 1,
+                    'Preço Venda Avulsa (R$)': p.selling_price,
+                    'Preço Venda Caixa (R$)': p.box_selling_price || 0.0,
+                    'Estoque Atual': p.quantity,
+                    'Estoque Mínimo': p.min_quantity
+                };
+                if (role === 'ADMIN') {
+                    item['Preço Custo (R$)'] = p.cost_price || 0.0;
+                }
+                return item;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Produtos");
+            XLSX.writeFile(workbook, `Estoque_Produtos_${new Date().toISOString().slice(0,10)}.xlsx`);
+        });
+
+        document.getElementById('btnExportPDF')?.addEventListener('click', () => {
+            if (!allProducts || allProducts.length === 0) {
+                alert('Nenhum produto disponível para exportar.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            doc.setFontSize(16);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Estoque Fácil - Relatório de Catálogo de Produtos", 14, 15);
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 22);
+
+            const tableHeaders = role === 'ADMIN'
+                ? [["SKU", "Produto", "Categoria", "Un", "Fator CX", "Custo (R$)", "Venda un (R$)", "Venda cx (R$)", "Estoque"]]
+                : [["SKU", "Produto", "Categoria", "Un", "Fator CX", "Venda un (R$)", "Venda cx (R$)", "Estoque"]];
+
+            const tableRows = allProducts.map(p => {
+                const row = [
+                    p.code,
+                    p.name,
+                    p.category,
+                    p.unit,
+                    p.items_per_box || 1,
+                ];
+                if (role === 'ADMIN') {
+                    row.push(p.cost_price ? p.cost_price.toFixed(2) : '0.00');
+                }
+                row.push(
+                    p.selling_price.toFixed(2),
+                    p.box_selling_price ? p.box_selling_price.toFixed(2) : '-',
+                    `${p.quantity} ${p.unit}`
+                );
+                return row;
+            });
+
+            doc.autoTable({
+                head: tableHeaders,
+                body: tableRows,
+                startY: 28,
+                theme: 'striped',
+                headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+                styles: { fontSize: 9, cellPadding: 3 }
+            });
+
+            doc.save(`Relatorio_Produtos_${new Date().toISOString().slice(0,10)}.pdf`);
+        });
+
+
+        fetchProducts();
+    </script>
+</body>
+</html>

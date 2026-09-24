@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque Fácil - Relatórios & Power BI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bibliotecas de Exportação Excel e PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col md:flex-row">
+
+    <!-- Overlay Mobile -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- Sidebar Menu Mobile/Desktop -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static md:flex transition-transform duration-300 ease-in-out min-h-screen">
+        <div>
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white leading-tight">Estoque Fácil</h1>
+                        <span class="text-xs text-slate-400">Controle Inteligente</span>
+                    </div>
+                </div>
+                <button id="closeSidebarBtn" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="/static/dashboard.html"
+                    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </a>
+                <a href="/static/produtos.html"
+                    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-box"></i> Produtos
+                </a>
+                <a href="/static/movimentacoes.html"
+                    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-right-left"></i> Entradas / Saídas
+                </a>
+                <a href="/static/relatorios.html"
+                    class="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium">
+                    <i class="fa-solid fa-chart-pie"></i> Relatórios & SQL
+                </a>
+                <a href="/static/usuarios.html" id="navUsers"
+                    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 text-slate-300 rounded-lg font-medium transition hidden">
+                    <i class="fa-solid fa-users-gear"></i> Usuários
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <button id="logoutBtn"
+                class="w-full py-2 px-3 bg-slate-800 hover:bg-red-600/20 hover:text-red-400 text-slate-400 rounded-lg text-sm font-medium transition text-left flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <header class="bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center gap-2 md:gap-3">
+                <button onclick="window.history.back()"
+                    class="text-slate-600 hover:text-blue-600 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+                    title="Voltar para a página anterior">
+                    <i class="fa-solid fa-arrow-left text-base"></i>
+                </button>
+                <button id="openSidebarBtn"
+                    class="md:hidden text-slate-700 hover:text-blue-600 p-2 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 class="text-lg md:text-xl font-bold text-slate-800">Relatórios & SQL</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btnRepExportExcel" title="Exportar dados gerenciais em Excel"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg text-xs md:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Excel</span>
+                </button>
+                <button id="btnRepExportPDF" title="Exportar dados gerenciais em PDF"
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-2 rounded-lg text-xs md:text-sm shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-pdf"></i> <span class="hidden md:inline">PDF</span>
+                </button>
+            </div>
+        </header>
+
+
+
+        <main class="p-4 md:p-6 space-y-6 overflow-y-auto">
+
+            <!-- Card Financial Valuation (Admin Only) -->
+            <div id="valuationCard" class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm hidden">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-base md:text-lg">
+                    <i class="fa-solid fa-file-invoice-dollar text-emerald-600"></i> Valuation e Margem do Estoque
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Custo Total de Aquisição</span>
+                        <div id="valCost" class="text-lg md:text-xl font-bold text-slate-700 mt-1">R$ 0,00</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Valor Potencial de Venda</span>
+                        <div id="valSelling" class="text-lg md:text-xl font-bold text-emerald-600 mt-1">R$ 0,00</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Lucro Bruto Estimado</span>
+                        <div id="valProfit" class="text-lg md:text-xl font-bold text-blue-600 mt-1">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos Gerenciais -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Top Vendas -->
+                <div class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-base md:text-lg">
+                        <i class="fa-solid fa-fire text-amber-500"></i> Produtos Mais Vendidos
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="chartTopSelling"></canvas>
+                    </div>
+                </div>
+
+                <!-- Produtos Parados -->
+                <div class="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-base md:text-lg">
+                        <i class="fa-solid fa-box-open text-red-500"></i> Produtos Parados (+30 dias)
+                    </h3>
+                    <div id="idleProductsList" class="space-y-3 max-h-64 overflow-y-auto">
+                        <p class="text-slate-400 text-sm text-center py-8">Buscando itens sem movimentação...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+
+        if (!token) window.location.href = '/static/index.html';
+
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const openSidebarBtn = document.getElementById('openSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        openSidebarBtn?.addEventListener('click', openSidebar);
+        closeSidebarBtn?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+
+        if (role === 'ADMIN') {
+            document.getElementById('navUsers').classList.remove('hidden');
+            document.getElementById('valuationCard').classList.remove('hidden');
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/static/index.html';
+        });
+
+        let globalTopSelling = [];
+        let globalIdleProducts = [];
+        let globalValuation = null;
+
+        async function loadReports() {
+            const headers = { 'Authorization': `Bearer ${token}` };
+
+            if (role === 'ADMIN') {
+                try {
+                    const res = await fetch('/api/reports/valuation', { headers });
+                    if (res.ok) {
+                        globalValuation = await res.json();
+                        document.getElementById('valCost').innerText = `R$ ${globalValuation.total_cost_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                        document.getElementById('valSelling').innerText = `R$ ${globalValuation.total_selling_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                        document.getElementById('valProfit').innerText = `R$ ${globalValuation.potential_profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                    }
+                } catch (err) { console.error(err); }
+            }
+
+            try {
+                const res = await fetch('/api/reports/top-selling', { headers });
+                if (res.ok) {
+                    globalTopSelling = await res.json();
+                    renderChart(globalTopSelling);
+                }
+            } catch (err) { console.error(err); }
+
+            try {
+                const res = await fetch('/api/reports/idle-products?days=30', { headers });
+                if (res.ok) {
+                    globalIdleProducts = await res.json();
+                    renderIdleProducts(globalIdleProducts);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // --- EXPORTAÇÃO EXCEL E PDF DOS RELATÓRIOS GERENCIAIS ---
+        document.getElementById('btnRepExportExcel')?.addEventListener('click', () => {
+            const workbook = XLSX.utils.book_new();
+
+            // Aba 1: Top Mais Vendidos
+            if (globalTopSelling && globalTopSelling.length > 0) {
+                const topData = globalTopSelling.map(t => ({
+                    'SKU': t.code,
+                    'Produto': t.name,
+                    'Qtd Total Vendida': t.total_quantity_sold,
+                    'Faturamento (R$)': t.total_revenue || 0.0
+                }));
+                const wsTop = XLSX.utils.json_to_sheet(topData);
+                XLSX.utils.book_append_sheet(workbook, wsTop, "Mais Vendidos");
+            }
+
+            // Aba 2: Produtos Parados (+30 dias)
+            if (globalIdleProducts && globalIdleProducts.length > 0) {
+                const idleData = globalIdleProducts.map(i => ({
+                    'SKU': i.code,
+                    'Produto': i.name,
+                    'Categoria': i.category,
+                    'Estoque Parado': i.quantity,
+                    'Unidade': i.unit
+                }));
+                const wsIdle = XLSX.utils.json_to_sheet(idleData);
+                XLSX.utils.book_append_sheet(workbook, wsIdle, "Produtos Parados");
+            }
+
+            XLSX.writeFile(workbook, `Relatorio_Gerencial_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        });
+
+        document.getElementById('btnRepExportPDF')?.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Estoque Fácil - Relatório Gerencial", 14, 15);
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Data de Emissão: ${new Date().toLocaleString('pt-BR')}`, 14, 22);
+
+            let currentY = 28;
+
+            // Seção Valuation (Admin)
+            if (role === 'ADMIN' && globalValuation) {
+                doc.setFontSize(12);
+                doc.setTextColor(15, 23, 42);
+                doc.text("Valuation do Estoque:", 14, currentY);
+                currentY += 6;
+
+                doc.autoTable({
+                    head: [["Total Produtos", "Total Itens", "Custo Total (R$)", "Valor Venda (R$)", "Lucro Estimado (R$)"]],
+                    body: [[
+                        globalValuation.total_products,
+                        globalValuation.total_items,
+                        globalValuation.total_cost_value.toFixed(2),
+                        globalValuation.total_selling_value.toFixed(2),
+                        globalValuation.potential_profit.toFixed(2)
+                    ]],
+                    startY: currentY,
+                    theme: 'grid',
+                    headStyles: { fillColor: [16, 185, 129] },
+                    styles: { fontSize: 8 }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
+            // Seção Top Vendidos
+            if (globalTopSelling && globalTopSelling.length > 0) {
+                doc.setFontSize(12);
+                doc.setTextColor(15, 23, 42);
+                doc.text("Produtos Mais Vendidos (Top Giro):", 14, currentY);
+                currentY += 6;
+
+                const topRows = globalTopSelling.map(t => [t.code, t.name, t.total_quantity_sold, `R$ ${(t.total_revenue || 0).toFixed(2)}`]);
+                doc.autoTable({
+                    head: [["SKU", "Produto", "Qtd Vendida", "Faturamento"]],
+                    body: topRows,
+                    startY: currentY,
+                    theme: 'striped',
+                    headStyles: { fillColor: [37, 99, 235] },
+                    styles: { fontSize: 8 }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
+            doc.save(`Relatorio_Gerencial_${new Date().toISOString().slice(0, 10)}.pdf`);
+        });
+
+        function renderChart(data) {
+            const ctx = document.getElementById('chartTopSelling').getContext('2d');
+            if (data.length === 0) {
+                document.getElementById('chartTopSelling').parentElement.innerHTML = `<p class="text-center text-slate-400 py-10 text-sm">Nenhuma venda registrada ainda para compor o gráfico.</p>`;
+                return;
+            }
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        label: 'Unidades Vendidas',
+                        data: data.map(d => d.total_quantity_sold),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function renderIdleProducts(idle) {
+            const container = document.getElementById('idleProductsList');
+            if (idle.length === 0) {
+                container.innerHTML = `<p class="text-center text-emerald-600 py-8 text-sm font-medium"><i class="fa-solid fa-circle-check"></i> Todos os produtos tiveram movimentação recente!</p>`;
+                return;
+            }
+
+            container.innerHTML = idle.map(p => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 gap-2">
+                    <div class="min-w-0">
+                        <span class="font-semibold text-slate-800 text-sm block truncate">${p.name}</span>
+                        <div class="text-xs text-slate-400 font-mono truncate">${p.code} • ${p.category}</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="bg-red-100 text-red-700 font-bold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">${p.quantity} ${p.unit}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        loadReports();
+    </script>
+</body>
+
+
+</html>
