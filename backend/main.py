@@ -1,10 +1,15 @@
+import sys
+import os
+
+# Garantir que a pasta backend esteja no path de busca de módulos do Python
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
-import os
 from datetime import datetime, timedelta
 
 from database import engine, Base, get_db
